@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel do atendente</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Sistema de fila</div>
+  <h1>Painel do atendente</h1>
+  <p class="subtitle">Chame o próximo da fila. Um e-mail é enviado automaticamente para quem for chamado.</p>
+
+  <div class="card" id="bloco-login">
+    <label for="senha-admin">Senha de atendente</label>
+    <input type="text" id="senha-admin" placeholder="Digite a senha de acesso">
+    <button class="btn-primary" id="btn-entrar-admin">Entrar</button>
+    <div class="erro" id="erro-login"></div>
+  </div>
+
+  <div class="card" id="bloco-painel" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div class="label" style="color:var(--text-dim); font-size:13px;">Pessoas aguardando</div>
+        <div style="font-size:28px; font-weight:800; color:var(--gold);" id="total-fila">0</div>
+      </div>
+      <button class="btn-primary" style="width:auto; margin:0; padding:16px 28px;" id="btn-chamar">Chamar próximo</button>
+    </div>
+    <div class="erro" id="msg-status"></div>
+
+    <ul class="lista-espera" id="lista-atendente" style="margin-top:24px;"></ul>
+  </div>
+
+  <p style="margin-top:24px;"><a class="link-discreto" href="painel.html">← Ver painel público</a></p>
+</div>
+
+<script>
+let senhaAdmin = sessionStorage.getItem('senhaAdmin') || '';
+
+const blocoLogin = document.getElementById('bloco-login');
+const blocoPainel = document.getElementById('bloco-painel');
+
+async function tentarEntrar() {
+  senhaAdmin = document.getElementById('senha-admin').value;
+  const ok = await carregarFilaAdmin();
+  if (ok) {
+    sessionStorage.setItem('senhaAdmin', senhaAdmin);
+    blocoLogin.style.display = 'none';
+    blocoPainel.style.display = 'block';
+    setInterval(carregarFilaAdmin, 5000);
+  } else {
+    document.getElementById('erro-login').textContent = 'Senha incorreta.';
+  }
+}
+
+document.getElementById('btn-entrar-admin').addEventListener('click', tentarEntrar);
+
+async function carregarFilaAdmin() {
+  const resp = await fetch('/api/atendente/fila', {
+    headers: { 'x-admin-password': senhaAdmin },
+  });
+  if (!resp.ok) return false;
+
+  const itens = await resp.json();
+  const aguardando = itens.filter(i => i.status === 'aguardando');
+  const chamados = itens.filter(i => i.status === 'chamado');
+
+  document.getElementById('total-fila').textContent = aguardando.length;
+  const lista = document.getElementById('lista-atendente');
+  lista.innerHTML = [
+    ...chamados.map(i => `<li><span>Senha ${i.senha} · ${i.nome}</span><span class="badge">chamado</span></li>`),
+    ...aguardando.map(i => `<li><span>Senha ${i.senha} · ${i.nome}</span><span class="badge">aguardando</span></li>`),
+  ].join('') || '<li style="color:var(--text-dim)">Fila vazia.</li>';
+
+  return true;
+}
+
+document.getElementById('btn-chamar').addEventListener('click', async () => {
+  const msg = document.getElementById('msg-status');
+  msg.style.color = 'var(--text-dim)';
+  msg.textContent = 'Chamando...';
+
+  const resp = await fetch('/api/chamar-proximo', {
+    method: 'POST',
+    headers: { 'x-admin-password': senhaAdmin },
+  });
+  const dado = await resp.json();
+
+  if (!resp.ok) {
+    msg.style.color = 'var(--danger)';
+    msg.textContent = dado.erro || 'Erro ao chamar próximo.';
+    return;
+  }
+
+  msg.style.color = 'var(--gold)';
+  msg.textContent = `Senha ${dado.senha} (${dado.nome}) chamada. E-mail enviado.`;
+  carregarFilaAdmin();
+});
+
+// Se já tiver senha salva na sessão, tenta entrar direto
+if (senhaAdmin) tentarEntrar();
+</script>
+</body>
+</html>
