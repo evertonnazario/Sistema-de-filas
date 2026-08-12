@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de chamadas</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Sistema de fila</div>
+  <h1>Painel de atendimento</h1>
+  <p class="subtitle">Acompanhe as senhas chamadas em tempo real.</p>
+
+  <div class="painel-grid">
+    <div class="card chamado-atual">
+      <div class="label">Senha chamada agora</div>
+      <div class="senha" id="senha-atual">--</div>
+      <div class="nome" id="nome-atual">Aguardando chamada</div>
+
+      <div class="hist-chamados" id="historico"></div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow" style="font-size:12px;">Na fila (<span id="total-espera">0</span>)</div>
+      <ul class="lista-espera" id="lista-espera"></ul>
+    </div>
+  </div>
+
+  <div class="rodape-painel">
+    <a class="link-discreto" href="index.html">← Entrar na fila</a>
+    <a class="link-discreto" href="atendente.html">Painel do atendente →</a>
+  </div>
+</div>
+
+<script>
+async function atualizar() {
+  try {
+    const resp = await fetch('/api/fila');
+    const dados = await resp.json();
+
+    const chamadoMaisRecente = dados.chamados[0];
+    document.getElementById('senha-atual').textContent = chamadoMaisRecente ? chamadoMaisRecente.senha : '--';
+    document.getElementById('nome-atual').textContent = chamadoMaisRecente ? chamadoMaisRecente.nome : 'Aguardando chamada';
+
+    const historico = document.getElementById('historico');
+    historico.innerHTML = dados.chamados.slice(1).map(c => `<span>Senha ${c.senha}</span>`).join('');
+
+    document.getElementById('total-espera').textContent = dados.totalAguardando;
+    const lista = document.getElementById('lista-espera');
+    lista.innerHTML = dados.aguardando.slice(0, 10).map(item => `
+      <li><span>Senha ${item.senha} · ${item.nome}</span><span class="badge">aguardando</span></li>
+    `).join('') || '<li style="color:var(--text-dim)">Nenhuma pessoa na fila.</li>';
+  } catch (erro) {
+    console.error('Erro ao atualizar painel:', erro);
+  }
+}
+
+atualizar();
+setInterval(atualizar, 4000);
+</script>
+</body>
+</html>
