@@ -42,29 +42,3 @@ Se preferir outro provedor de e-mail (Outlook, provedor da sua empresa, etc.), t
 
 Se o `.env` não tiver `SMTP_HOST` preenchido, o sistema funciona normalmente
 (fila e painel funcionam), só não envia o e-mail.
-
-## Publicando online 
-
-Como você escolheu que o sistema fica online, o jeito mais simples é publicar em um
-serviço gratuito/barato que rode Node.js, como o [Render](https://render.com):
-
-1. Crie uma conta no Render e um novo "Web Service".
-2. Suba este projeto para um repositório no GitHub e conecte ao Render (ou use o deploy manual).
-3. Configure:
-   - **Build command:** `npm install`
-   - **Start command:** `npm start`
-4. Em "Environment", adicione as mesmas variáveis do seu `.env` (`ADMIN_PASSWORD`, `SMTP_HOST`, etc.).
-5. Depois do deploy, você terá uma URL pública, por exemplo:
-   `https://sua-fila.onrender.com` → entrar na fila
-   `https://sua-fila.onrender.com/painel.html` → painel público
-   `https://sua-fila.onrender.com/atendente.html` → painel do atendente
-
-Posso te ajudar a fazer esse deploy passo a passo quando estiver pronto.
-
-## Como funciona por dentro
-
-- O backend (`server.js`) guarda a fila num arquivo `fila.json` na pasta do projeto.
-- O painel público e o painel do atendente atualizam automaticamente a cada poucos segundos
-  (não precisa recarregar a página).
-- Ao clicar em "Chamar próximo", o sistema marca a pessoa como chamada e dispara o e-mail.
-- A senha do atendente evita que qualquer visitante consiga chamar senhas.
