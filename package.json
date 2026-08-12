@@ -1,0 +1,14 @@
+{
+  "name": "sistema-fila-atendimento",
+  "version": "1.0.0",
+  "description": "Sistema de fila para atendimento com painel de senhas e aviso por e-mail",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "nodemailer": "^6.9.14",
+    "dotenv": "^16.4.5"
+  }
+}
